@@ -560,6 +560,7 @@ class CRM_Campaigntargetreport_Form_Report_Campaigntarget extends CRM_Report_For
    * @return array
    */
   function statistics(&$rows) {
+    
     $statistics = parent::statistics($rows);
 
     $softCredit = CRM_Utils_Array::value('soft_amount', $this->_params['fields']);
@@ -584,20 +585,24 @@ ROUND(AVG({$this->_aliases['civicrm_contribution_soft']}.amount), 2) as civicrm_
     $sql = "{$select} {$this->_from} {$this->_where} {$group} {$this->_having}";
 
     $dao = CRM_Core_DAO::executeQuery($sql);
+    
+    
     $totalAmount = $average = $softTotalAmount = $softAverage = array();
     $count = $softCount = 0;
+    $config = CRM_Core_Config::singleton();
+
     while ($dao->fetch()) {
-      $totalAmount[] = CRM_Utils_Money::format($dao->civicrm_contribution_total_amount_sum, $dao->currency)." (".$dao->civicrm_contribution_total_amount_count.")";
-      $average[] = CRM_Utils_Money::format($dao->civicrm_contribution_total_amount_avg, $dao->currency);
+      $totalAmount[] = CRM_Utils_Money::format($dao->civicrm_contribution_total_amount_sum, $config->defaultCurrency )." (".$dao->civicrm_contribution_total_amount_count.")";
+      $average[] = CRM_Utils_Money::format($dao->civicrm_contribution_total_amount_avg, $config->defaultCurrency);
       $count += $dao->civicrm_contribution_total_amount_count;
 
       if ($softCredit) {
-        $softTotalAmount[] = CRM_Utils_Money::format($dao->civicrm_contribution_soft_soft_amount_sum, $dao->currency)." (".$dao->civicrm_contribution_soft_soft_amount_count.")";
-        $softAverage[] = CRM_Utils_Money::format($dao->civicrm_contribution_soft_soft_amount_avg, $dao->currency);
+        $softTotalAmount[] = CRM_Utils_Money::format($dao->civicrm_contribution_soft_soft_amount_sum, $config->defaultCurrency)." (".$dao->civicrm_contribution_soft_soft_amount_count.")";
+        $softAverage[] = CRM_Utils_Money::format($dao->civicrm_contribution_soft_soft_amount_avg, $config->defaultCurrency);
         $softCount += $dao->civicrm_contribution_soft_soft_amount_count;
       }
     }
-
+    
     if (!$onlySoftCredit) {
       $statistics['counts']['amount'] = array(
         'title' => ts('Total Amount'),
@@ -692,18 +697,17 @@ ROUND(AVG({$this->_aliases['civicrm_contribution_soft']}.amount), 2) as civicrm_
    */
   function alterDisplay(&$rows) {
     // custom code to alter rows
+    $config = CRM_Core_Config::singleton();
     $entryFound = FALSE;
     $rowCount = count($rows);
     
     $temp['civicrm_contact_id']                         = NULL;  
-  //$temp['civicrm_contribution_currency']              = 'Default currancy';
     $temp['civicrm_contribution_campaign_id']           = NULL;
     $temp['civicrm_campaign_goal_revenue']              = 0;
     $temp['civicrm_contribution_total_amount_sum']      = 0;
     $temp['civicrm_contribution_total_amount_surplus']  = 0;
     $temp['civicrm_contribution_total_amount_count']    = 0;
     $temp['civicrm_contribution_total_amount_avg']      = 0;
-    
     
     foreach ($rows as $rowNum => $row) {
       // make count columns point to detail report
@@ -787,44 +791,39 @@ ROUND(AVG({$this->_aliases['civicrm_contribution_soft']}.amount), 2) as civicrm_
       if (!$entryFound) {
         break;
       }
-      
       $rows[$rowNum]['civicrm_contribution_currency'] = $config->defaultCurrency;
       
       if(empty($row['civicrm_campaign_goal_revenue'])){
           
          $row['civicrm_campaign_goal_revenue'] = 0; 
       }
-
       if(empty($row['civicrm_contribution_total_amount_sum'])){
           
          $row['civicrm_contribution_total_amount_sum'] = 0; 
       }
-
       if(empty($row['civicrm_contribution_total_amount_surplus'])){
           
           $row['civicrm_contribution_total_amount_surplus'] = 0;
       }
-
          if(empty($row['civicrm_contribution_total_amount_count'])){
           
          $row['civicrm_contribution_total_amount_count'] = 0; 
       }
-
       if(empty($row['civicrm_contribution_total_amount_avg'])){
           
           $row['civicrm_contribution_total_amount_avg'] = 0;          
       }
-      
         $temp['civicrm_campaign_goal_revenue']              += $row['civicrm_campaign_goal_revenue'];
         $temp['civicrm_contribution_total_amount_sum']      += $row['civicrm_contribution_total_amount_sum'];
         $temp['civicrm_contribution_total_amount_surplus']  += $row['civicrm_contribution_total_amount_surplus'];
         $temp['civicrm_contribution_total_amount_count']    += $row['civicrm_contribution_total_amount_count'];
         $temp['civicrm_contribution_total_amount_avg']      += $row['civicrm_contribution_total_amount_avg'];
-          
-    }  
+  }  
+
     $stat = $this->statistics($rows);
     $avg  = explode(" ", $stat['counts']['avg']['value']);
     $temp['civicrm_contribution_total_amount_avg'] = $avg['1'];
-   array_push($rows, $temp);
+    
+    array_push($rows, $temp);
    }
  }
