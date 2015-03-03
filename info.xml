@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <extension key="uk.co.vedaconsulting.campaigntargetreport" type="module">
   <file>campaigntargetreport</file>
-  <name>Campaigntargetreport</name>
+  <name>Campaign target report shows Campaign target Vs Contributions surplus</name>
   <description>campaigntargetreport</description>
   <license>AGPL-3.0</license>
   <maintainer>
-    <author>VAJEEVAN</author>
+    <author>vajeevan</author>
     <email>vajeevan@gmail.com</email>
   </maintainer>
   <urls>
